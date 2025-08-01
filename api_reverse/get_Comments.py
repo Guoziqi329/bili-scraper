@@ -12,8 +12,8 @@ def get_offset(response) -> str:
 
 if __name__ == '__main__':
     with open('cookie.json', 'r') as f:
-        config = json.load(f)
-    cookie = config['cookie']
+        cookie = json.load(f)['cookie']
+        
     payload = {
         "oid": "814225886",
         "type": "1",
