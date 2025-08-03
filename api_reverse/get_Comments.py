@@ -112,10 +112,6 @@ def get_video_comments(cookie: str, video_id: str, delay: int = 3) -> list:
 
     response = session.get("https://api.bilibili.com/x/v2/reply/wbi/main", headers=headers, params=payload)
 
-    # Save all parameters
-    with open("test.json", "w", encoding='utf-8') as f:
-        json.dump(response.json(), f)
-
     for item in response.json()['data']['replies']:
         if item['rcount'] > 0:
             second_level_comments = get_comments_on_the_comment(cookie, oid, item['rpid_str'],
@@ -132,8 +128,6 @@ def get_video_comments(cookie: str, video_id: str, delay: int = 3) -> list:
     print('-' * 200)
 
     time.sleep(delay)
-
-    i = 1
 
     while response.json()['data']['cursor']['pagination_reply'] is None:
         next_offset = get_offset(response)
@@ -156,10 +150,6 @@ def get_video_comments(cookie: str, video_id: str, delay: int = 3) -> list:
         if len(response.json()['data']['replies']) == 0:
             break
 
-        # Save all parameters
-        with open(f"test{i}.json", "w", encoding='utf-8') as f:
-            json.dump(response.json(), f)
-
         for item in response.json()['data']['replies']:
             if item['rcount'] > 0:
                 second_level_comments = get_comments_on_the_comment(cookie, oid, item['rpid_str'],
@@ -178,10 +168,8 @@ def get_video_comments(cookie: str, video_id: str, delay: int = 3) -> list:
 
         time.sleep(delay)
 
-        i += 1
-
     with open("result.json", "w", encoding='utf-8') as f:
-        json.dump(comments, f)
+        json.dump(comments, f, ensure_ascii=False)
     return comments
 
 
