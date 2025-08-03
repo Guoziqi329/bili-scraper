@@ -8,7 +8,7 @@ from hashlib import md5
 def get_wbiImgKey_and_wbiSubKey(cookie: str):
     """
     get wbiImgKey and wbiSubKey
-    :param cookie: Website's cookie information
+    :param cookie: website's cookie information
     :return: wbiImgKey, wbiSubKey
     """
     url = 'https://api.bilibili.com/x/web-interface/nav'
