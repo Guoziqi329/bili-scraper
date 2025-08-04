@@ -1,3 +1,4 @@
+import os
 import requests
 import json
 import time
@@ -77,6 +78,70 @@ def get_comments_on_the_comment(cookie: str, oid: str, root: str, pages: int, de
     return comments
 
 
+def create_path(path: str) -> None:
+    if not os.path.exists(path):
+        os.makedirs(path)
+
+
+def get_img(url: str, path: str, name: str) -> str:
+    """
+    get img from url
+    :param url: img url
+    :param path: directory of images
+    :param name: img name
+    :return: img path
+    """
+    headers = {
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36"
+    }
+    response = session.get(url, headers=headers)
+    create_path(f'{path}')
+    path = path.strip('/')
+    with open(f'{path}/{name}.{url.split('.')[-1]}', 'wb') as f:
+        f.write(response.content)
+    return f'{path}/{name}.{url.split('.')[-1]}'
+
+
+def process_response(response, comments: list, oid: str, delay: int = 3) -> list:
+    """
+    process response
+    :param response: response from bilibili
+    :param comments: comments list
+    :param oid: video id
+    :param delay: Interval time for initiating requests, the default value is 3.
+    :return: comments list
+    """
+    for item in response.json()['data']['replies']:
+        if item['rcount'] > 0:
+            second_level_comments = get_comments_on_the_comment(cookie, oid, item['rpid_str'],
+                                                                int(item['rcount'] / 10) + 1
+                                                                if item['rcount'] % 10 != 0
+                                                                else int(item['rcount'] / 10), delay)
+        else:
+            second_level_comments = None
+
+        img_list = list()
+
+        i = 1
+        if 'pictures' in item['content'].keys():
+            for pic in item['content']['pictures']:
+                img_list.append({"img_src": pic["img_src"],
+                                 "img_path": get_img(pic['img_src'], f'./img/{item['rpid_str']}', str(i))})
+                i += 1
+                time.sleep(delay)
+        else:
+            img_list = None
+
+        comments.append({'rpid': item['rpid_str'], 'message': item['content']['message'],
+                         'reply': second_level_comments, 'img': img_list})
+
+        print(item['content']['message'])
+        print('*' * 50)
+
+    print('-' * 200)
+    return comments
+
+
 def get_video_comments(cookie: str, video_id: str, delay: int = 3) -> list:
     """
     get video comments
@@ -112,24 +177,11 @@ def get_video_comments(cookie: str, video_id: str, delay: int = 3) -> list:
 
     response = session.get("https://api.bilibili.com/x/v2/reply/wbi/main", headers=headers, params=payload)
 
-    for item in response.json()['data']['replies']:
-        if item['rcount'] > 0:
-            second_level_comments = get_comments_on_the_comment(cookie, oid, item['rpid_str'],
-                                                                int(item['rcount'] / 10) + 1 if item['rcount'] % 10 != 0
-                                                                else int(item['rcount'] / 10), delay)
-        else:
-            second_level_comments = None
-        comments.append({'rpid': item['rpid_str'],
-                         'message': item['content']['message'],
-                         'reply': second_level_comments})
-        print(item['content']['message'])
-        print('*' * 50)
-
-    print('-' * 200)
+    process_response(response, comments, oid, delay)
 
     time.sleep(delay)
 
-    while response.json()['data']['cursor']['pagination_reply'] is None:
+    while response.json()['data']['cursor']['pagination_reply'] is not None:
         next_offset = get_offset(response)
         payload_2 = {
             "oid": oid,
@@ -150,21 +202,7 @@ def get_video_comments(cookie: str, video_id: str, delay: int = 3) -> list:
         if len(response.json()['data']['replies']) == 0:
             break
 
-        for item in response.json()['data']['replies']:
-            if item['rcount'] > 0:
-                second_level_comments = get_comments_on_the_comment(cookie, oid, item['rpid_str'],
-                                                                    int(item['rcount'] / 10) + 1
-                                                                    if item['rcount'] % 10 != 0
-                                                                    else int(item['rcount'] / 10), delay)
-            else:
-                second_level_comments = None
-            comments.append({'rpid': item['rpid_str'],
-                             'message': item['content']['message'],
-                             'reply': second_level_comments})
-            print(item['content']['message'])
-            print('*' * 50)
-
-        print('-' * 200)
+        process_response(response, comments, oid, delay)
 
         time.sleep(delay)
 
