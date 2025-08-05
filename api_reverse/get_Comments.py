@@ -62,16 +62,22 @@ def get_comments_on_the_comment(cookie: str, oid: str, root: str, pages: int, de
         response = session.get(url, headers=headers, params=payload)
         for item in response.json()['data']['replies']:
             if "at_name_to_mid_str" in item['content'].keys():
-                have_at = True
                 at_information = {"at_name": list(item['content']['at_name_to_mid_str'].keys())[0],
                                   "pid": list(item['content']['at_name_to_mid_str'].values())[0]}
             else:
-                have_at = False
                 at_information = None
+
+            jump_url_list = list()
+            if 'jump_url' in item['content'].keys():
+                for url in item['content']['jump_url'].keys():
+                    jump_url_list.append(url if '/' in url else f'https://b23.tv/{url}')
+            else:
+                jump_url_list = None
+
             comments.append({"rpid": item['rpid_str'],
                              "message": item['content']['message'],
-                             "have_at": have_at,
-                             "at_information": at_information})
+                             "at_information": at_information,
+                             "jump_url": jump_url_list})
         time.sleep(delay)
 
     print(comments)
@@ -132,8 +138,15 @@ def process_response(response, comments: list, oid: str, delay: int = 3) -> list
         else:
             img_list = None
 
+        jump_url_list = list()
+        if 'jump_url' in item['content'].keys():
+            for url in item['content']['jump_url'].keys():
+                jump_url_list.append(url if '/' in url else f'https://b23.tv/{url}')
+        else:
+            jump_url_list = None
+
         comments.append({'rpid': item['rpid_str'], 'message': item['content']['message'],
-                         'reply': second_level_comments, 'img': img_list})
+                         'reply': second_level_comments, 'img': img_list, 'jump_url': jump_url_list})
 
         print(item['content']['message'])
         print('*' * 50)
@@ -177,7 +190,7 @@ def get_video_comments(cookie: str, video_id: str, delay: int = 3) -> list:
 
     response = session.get("https://api.bilibili.com/x/v2/reply/wbi/main", headers=headers, params=payload)
 
-    process_response(response, comments, oid, delay)
+    comments = process_response(response, comments, oid, delay)
 
     time.sleep(delay)
 
@@ -202,7 +215,7 @@ def get_video_comments(cookie: str, video_id: str, delay: int = 3) -> list:
         if len(response.json()['data']['replies']) == 0:
             break
 
-        process_response(response, comments, oid, delay)
+        comments = process_response(response, comments, oid, delay)
 
         time.sleep(delay)
 
