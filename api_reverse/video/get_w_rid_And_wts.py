@@ -8,7 +8,7 @@ from hashlib import md5
 def get_wbiImgKey_and_wbiSubKey(cookie: str):
     """
     get wbiImgKey and wbiSubKey
-    :param cookie: Website's cookie information
+    :param cookie: website's cookie information
     :return: wbiImgKey, wbiSubKey
     """
     url = 'https://api.bilibili.com/x/web-interface/nav'
@@ -64,7 +64,7 @@ def get_w_rid_And_wts(wbiImgKey: str, wbiSubKey: str, e: dict):
 
 
 if __name__ == '__main__':
-    with open("cookie.json", 'r') as f:
+    with open("../cookie.json", 'r') as f:
         cookie = json.load(f)["cookie"]
 
     wbiImgKey, wbiSubKey = get_wbiImgKey_and_wbiSubKey(cookie)
