@@ -136,7 +136,8 @@ def process_response(response, comments: list, oid: str, video_id: str, img_path
         if 'pictures' in item['content'].keys():
             for pic in item['content']['pictures']:
                 img_list.append({"img_src": pic["img_src"],
-                                 "img_path": get_img(pic['img_src'], f'{img_path}/{video_id}/{item['rpid_str']}', str(i))})
+                                 "img_path": get_img(pic['img_src'], f'{img_path}/{video_id}/{item['rpid_str']}',
+                                                     str(i))})
                 i += 1
                 time.sleep(delay)
         else:
@@ -159,7 +160,7 @@ def process_response(response, comments: list, oid: str, video_id: str, img_path
     return comments
 
 
-def get_video_comments(cookie: str, video_id: str, img_path: str = '.',delay: int = 3) -> list:
+def get_video_comments(cookie: str, video_id: str, img_path: str = '.', delay: int = 3) -> list:
     """
     get video comments
     :param cookie: website's cookie information
