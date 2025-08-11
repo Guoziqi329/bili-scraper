@@ -8,8 +8,6 @@ from moviepy.video.io.VideoFileClip import VideoFileClip
 from moviepy.audio.io.AudioFileClip import AudioFileClip
 import logging
 
-
-
 session = requests.Session()
 
 
@@ -77,7 +75,7 @@ def get_video(cookie: str, video_id: str, path: str = '.', select_video_quality:
         while video_quality not in range(1, len(accept_quality) + 1):
             print("please select video quality")
             for i in range(1, len(accept_quality) + 1):
-                print(f'{i} : {accept_description[i-1]}', end='\t')
+                print(f'{i} : {accept_description[i - 1]}', end='\t')
             video_quality = int(input('\n'))
             if video_quality not in range(1, len(accept_quality) + 1):
                 logging.error('Parameter error, please select again.')
