@@ -1,3 +1,5 @@
+import requests
+
 def get_article(cookie: str,article_id: str,storage_location: str = '.') -> None:
     """
     get_article
