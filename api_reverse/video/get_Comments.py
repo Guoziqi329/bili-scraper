@@ -8,11 +8,11 @@ from get_w_rid_And_wts import get_wbiImgKey_and_wbiSubKey, get_w_rid_And_wts, en
 session = requests.Session()
 
 
-def get_oid(video_id: str, cookie) -> str:
+def get_oid(cookie:str, video_id: str) -> str:
     """
     get video oid by video id
-    :param video_id: the id in the url, such as BV1Mg8RzFExV
     :param cookie: website's cookie information
+    :param video_id: the id in the url, such as BV1Mg8RzFExV
     :return: video's oid
     """
     url = f"https://www.bilibili.com/video/{video_id}/"
