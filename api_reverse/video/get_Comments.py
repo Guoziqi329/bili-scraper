@@ -8,7 +8,7 @@ from get_w_rid_And_wts import get_wbiImgKey_and_wbiSubKey, get_w_rid_And_wts, en
 session = requests.Session()
 
 
-def get_oid(cookie:str, video_id: str) -> str:
+def get_oid(cookie: str, video_id: str) -> str:
     """
     get video oid by video id
     :param cookie: website's cookie information
@@ -225,8 +225,6 @@ def get_video_comments(cookie: str, video_id: str, img_path: str = '.', delay: i
 
         time.sleep(delay)
 
-    with open(f"result.json", "w", encoding='utf-8') as f:
-        json.dump(comments, f, ensure_ascii=False)
     return comments
 
 
@@ -235,4 +233,7 @@ if __name__ == '__main__':
         cookie = json.load(f)['cookie']
 
     video_id = 'BV1xqgazCECb'
-    get_video_comments(cookie, video_id, '../img')
+    comments = get_video_comments(cookie, video_id, '../img')
+
+    with open(f"result.json", "w", encoding='utf-8') as f:
+        json.dump(comments, f, ensure_ascii=False)
