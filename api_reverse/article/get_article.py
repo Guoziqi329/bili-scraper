@@ -1,7 +1,15 @@
+import time
 import requests
 import json
+import re
+import os
 from datetime import datetime
 from lxml import etree
+
+
+def create_path(path: str) -> None:
+    if not os.path.exists(path):
+        os.makedirs(path)
 
 
 def get_article_html(cookie: str, article_id: str):
@@ -27,6 +35,36 @@ def get_text(xpath_list):
         return xpath_list[0].text
 
 
+def get_p_tag_text(html) -> str:
+    result = html.xpath('./span')
+    if len(result) != 0:
+        return result[0].text
+    else:
+        return '\n'
+
+
+def get_div_tag_img(cookie, html, path) -> None:
+    html = html.xpath('.//img')
+    url = 'https:' + html[0].attrib['src']
+    headers = {
+        'cookie': cookie,
+        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36'
+    }
+    response = requests.get(url, headers=headers)
+    time.sleep(0.5)
+
+    create_path(path)
+
+    suffix = re.findall(r'\.(.*)@', url.split('/')[-1])[0]
+
+    name = re.findall(rf'(.*)\.{suffix}', url.split('/')[-1])[0]
+
+    with open(f'{path}/{name}.{suffix}', 'wb') as f:
+        f.write(response.content)
+
+    print(f'{path}/{name}.png')
+
+
 def get_article(cookie: str, article_id: str, storage_location: str = '.') -> None:
     """
     get_article
@@ -49,7 +87,10 @@ def get_article(cookie: str, article_id: str, storage_location: str = '.') -> No
     content = element.xpath('//*[@id="app"]/div[4]/div[1]/div[4]/*')
 
     for item in content:
-        print(item.tag)
+        if item.tag == 'p':
+            print(get_p_tag_text(item))
+        elif item.tag == 'div':
+            get_div_tag_img(cookie, item, storage_location)
 
     print(content)
 
@@ -61,4 +102,4 @@ if __name__ == '__main__':
         cookie = json.load(f)['cookie']
 
     article_id = '1097430290934005800'
-    get_article(cookie, article_id)
+    get_article(cookie, article_id, 'img')
