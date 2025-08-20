@@ -8,6 +8,7 @@ from lxml import etree
 from docx import Document
 from docx.shared import RGBColor, Pt, Cm
 from docx.oxml.ns import qn
+from PIL import Image
 
 
 def create_path(path: str) -> None:
@@ -38,18 +39,31 @@ def get_text(xpath_list):
         return xpath_list[0].text
 
 
-def get_p_tag_text(html) -> str:
+def get_p_tag_text(html) -> tuple:
     result = html.xpath('./span | ./strong')
+    color = result[0].get('style')
+    if color is not None:
+        color = re.findall(r'color:(.*?);', result[0].get('style'))[0]
+    is_strong = result[0].tag == 'strong'
     if len(result) != 0:
-        return ''.join(result[i].text for i in range(0, len(result)))
+        return ''.join(result[i].text for i in range(0, len(result))), color, is_strong
     else:
-        return '\n'
+        return '\n', color, is_strong
 
 
 def get_div_tag_img(cookie, item, path) -> list:
+    """
+    get img.
+    :param cookie: website's cookie information
+    :param item: each item under the opus-module-content class
+    :param path: img path
+    :return: image path list
+    """
     html_list = item.xpath('.//img')
 
     result = list()
+    url_list = list()
+
     for html in html_list:
         if not html.attrib['src']:
             continue
@@ -57,11 +71,16 @@ def get_div_tag_img(cookie, item, path) -> list:
         if "@" in url:
             url = re.findall(r'(.*)@.*', url)[0]
 
+        url_list.append(url.split('/')[-1])
+
+    url_list = list(dict.fromkeys(url_list))
+
+    for url in url_list:
         headers = {
             'cookie': cookie,
             'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36'
         }
-        response = requests.get(url, headers=headers)
+        response = requests.get('https://i0.hdslb.com/bfs/new_dyn/' + url, headers=headers)
         time.sleep(0.5)
 
         create_path(path)
@@ -77,26 +96,53 @@ def get_div_tag_img(cookie, item, path) -> list:
     return result
 
 
-def add_text(doc, text):
+def add_text(doc, text: str, color: str, is_strong: bool) -> None:
+    """
+    Add text to document.
+    :param doc: docx document
+    :param text: text
+    :param color: text's color
+    :param is_strong: bold font
+    :return: None
+    """
     paragraph = doc.add_paragraph(text)
-
+    if color is not None:
+        color = color.strip('#')
+        r = int(color[0:2], 16)
+        g = int(color[2:4], 16)
+        b = int(color[4:6], 16)
+    else:
+        r = 47
+        g = 50
+        b = 56
     for run in paragraph.runs:
-        run.font.color.rgb = RGBColor(47, 50, 56)
+        run.font.color.rgb = RGBColor(r, g, b)
         run.font.size = Pt(17 / 1.5)
         run.font.name = "黑体"
         run._element.rPr.rFonts.set(qn('w:eastAsia'), '黑体')
+        run.bold = is_strong
 
 
-def add_image(doc, image_path_list):
+def add_image(doc, image_path_list) -> None:
+    """
+    Add img to document.
+    :param doc: docx document
+    :param image_path_list: image path list
+    :return: None
+    """
     section = doc.sections[0]
 
     available_width = (section.page_width - section.left_margin - section.right_margin)
 
     for image_path in image_path_list:
+        img = Image.open(image_path)
+        img.save(image_path)
+        img.close()
         doc.add_picture(image_path, width=available_width)
 
 
-def get_article(cookie: str, article_id: str, doc_storage_location: str = '.', document_name: str = 'Document.doc',img_path: str = 'img') -> None:
+def get_article(cookie: str, article_id: str, doc_storage_location: str = '.', document_name: str = 'Document.doc',
+                img_path: str = 'img') -> None:
     """
     get_article
     :param cookie: website's cookie information.
@@ -112,7 +158,7 @@ def get_article(cookie: str, article_id: str, doc_storage_location: str = '.', d
     doc = Document()
 
     section = doc.sections[0]
-    section.page_width = Cm(21)  # 宽度 21 厘米
+    section.page_width = Cm(21)
     section.page_height = Cm(29.7)
 
     author_name = get_text(element.xpath('//div[@class="opus-module-author__name"]'))
@@ -149,7 +195,7 @@ def get_article(cookie: str, article_id: str, doc_storage_location: str = '.', d
         print(item.tag)
         if item.tag == 'p':
             print(get_p_tag_text(item))
-            add_text(doc, get_p_tag_text(item))
+            add_text(doc, *get_p_tag_text(item))
         elif item.tag == 'div':
             add_image(doc, get_div_tag_img(cookie, item, img_path))
 
@@ -164,5 +210,5 @@ if __name__ == '__main__':
     with open('../cookie.json', 'r') as f:
         cookie = json.load(f)['cookie']
 
-    article_id = '1097430290934005800'
-    get_article(cookie, article_id)
+    article_id = '1102687328784089096'
+    get_article(cookie, article_id,'./', 'document.doc')
