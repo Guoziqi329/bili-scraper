@@ -81,31 +81,48 @@ def get_img(cookie, url_list: list, path) -> list:
     return result
 
 
-def add_text(doc, text: str, color: str, is_strong: bool) -> None:
+def add_text(doc, item: dict) -> None:
     """
     Add text to document.
     :param doc: docx document
-    :param text: text
-    :param color: text's color
-    :param is_strong: bold font
+    :param item: item's text
     :return: None
     """
-    paragraph = doc.add_paragraph(text)
-    if color is not None:
-        color = color.strip('#')
-        r = int(color[0:2], 16)
-        g = int(color[2:4], 16)
-        b = int(color[4:6], 16)
-    else:
-        r = 47
-        g = 50
-        b = 56
-    for run in paragraph.runs:
-        run.font.color.rgb = RGBColor(r, g, b)
-        run.font.size = Pt(17 / 1.5)
-        run.font.name = "黑体"
-        run._element.rPr.rFonts.set(qn('w:eastAsia'), '黑体')
-        run.bold = is_strong
+    is_first = True
+    for nodes in item['nodes']:
+        words = nodes['word']['words']
+        if len(item['nodes']) > 1 and is_first is False:
+            paragraph.add_run(words)
+        else:
+            paragraph = doc.add_paragraph(words)
+
+        # get color
+        if 'color' in nodes['word'].keys():
+            color = nodes['word']['color'].strip('#')
+            r = int(color[0:2], 16)
+            g = int(color[2:4], 16)
+            b = int(color[4:6], 16)
+        else:
+            r = 47
+            g = 50
+            b = 56
+
+        fontSize = nodes['word']['font_size']
+
+        # get bold
+        if 'bold' in nodes['word']['style'].keys():
+            is_blod = nodes['word']['style']['bold']
+        else:
+            is_blod = False
+
+        for run in paragraph.runs:
+            run.font.color.rgb = RGBColor(r, g, b)
+            run.font.size = Pt(fontSize / 1.5)
+            run.font.name = "黑体"
+            run._element.rPr.rFonts.set(qn('w:eastAsia'), '黑体')
+            run.bold = is_blod
+
+        is_first = False
 
 
 def add_image(doc, image_path_list) -> None:
@@ -217,7 +234,7 @@ def get_article(cookie: str, article_id: str, doc_storage_location: str = '.', d
 
     for item in module_content:
         if item['para_type'] == 1:
-            print('text')
+            add_text(doc, item['text'])
         elif item['para_type'] == 2:
             print('image')
         elif item['para_type'] == 3:
