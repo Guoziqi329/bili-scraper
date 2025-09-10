@@ -4,13 +4,15 @@ import json
 import re
 import os
 from datetime import datetime
-from lxml import etree
 from docx import Document
 from docx.shared import RGBColor, Pt, Cm
 from docx.oxml.ns import qn
+from docx.oxml.shared import OxmlElement
+from docx.enum.text import WD_ALIGN_PARAGRAPH
 from PIL import Image
 
 session = requests.Session()
+
 
 def create_path(path: str) -> None:
     if not os.path.exists(path):
@@ -31,10 +33,6 @@ def get_article_html(cookie: str, article_id: str):
     }
     response = session.get(url, headers=headers)
     return response.text
-
-
-def get_text(item):
-    pass
 
 
 def get_p_tag_text(html) -> tuple:
@@ -81,48 +79,119 @@ def get_img(cookie, url_list: list, path) -> list:
     return result
 
 
-def add_text(doc, item: dict) -> None:
+def get_rgb(node: dict) -> tuple:
+    """
+    get rgb color
+    :param node: node
+    :return: r, g, b
+    """
+    if 'color' in node['word'].keys():
+        color = node['word']['color'].strip('#')
+        return int(color[0:2], 16), int(color[2:4], 16), int(color[4:6], 16)
+    else:
+        return 47, 50, 56
+
+def add_hyperlink(paragraph, text, url, color="00699D", underline=True):
+    # get document part
+    part = paragraph.part
+    # create a relationship
+    r_id = part.relate_to(url, "http://schemas.openxmlformats.org/officeDocument/2006/relationships/hyperlink", is_external=True)
+
+    # create hyperlink element
+    hyperlink = OxmlElement('w:hyperlink')
+    hyperlink.set(qn('r:id'), r_id)
+
+    # create text run
+    new_run = OxmlElement('w:r')
+
+    # create runtime attributes
+    rPr = OxmlElement('w:rPr')
+
+    # set color
+    color_elem = OxmlElement('w:color')
+    color_elem.set(qn('w:val'), color)
+    rPr.append(color_elem)
+
+    # set underline
+    if underline:
+        u_elem = OxmlElement('w:u')
+        u_elem.set(qn('w:val'), 'single')  # 单下划线
+        rPr.append(u_elem)
+
+    new_run.append(rPr)
+
+    # create text element
+    text_elem = OxmlElement('w:t')
+    text_elem.text = text
+    text_elem.set(qn('xml:space'), 'preserve')
+
+    new_run.append(text_elem)
+
+    # add run to hyperlink
+    hyperlink.append(new_run)
+
+    paragraph._p.append(hyperlink)
+
+    return hyperlink
+
+
+def add_text(doc, item: dict, align: int = 0) -> None:
     """
     Add text to document.
     :param doc: docx document
     :param item: item's text
     :return: None
     """
+    paragraph = doc.paragraphs
     is_first = True
-    for nodes in item['nodes']:
-        words = nodes['word']['words']
-        if len(item['nodes']) > 1 and is_first is False:
-            paragraph.add_run(words)
-        else:
-            paragraph = doc.add_paragraph(words)
+    for node in item:
+        if node['type'] == 'TEXT_NODE_TYPE_WORD':
+            # font size
+            fontSize = node['word']['font_size']
 
-        # get color
-        if 'color' in nodes['word'].keys():
-            color = nodes['word']['color'].strip('#')
-            r = int(color[0:2], 16)
-            g = int(color[2:4], 16)
-            b = int(color[4:6], 16)
-        else:
-            r = 47
-            g = 50
-            b = 56
+            # get bold
+            if 'bold' in node['word']['style'].keys():
+                is_blod = node['word']['style']['bold']
+            else:
+                is_blod = False
 
-        fontSize = nodes['word']['font_size']
+            words = node['word']['words']
 
-        # get bold
-        if 'bold' in nodes['word']['style'].keys():
-            is_blod = nodes['word']['style']['bold']
-        else:
-            is_blod = False
+            # get color
+            r, g, b = get_rgb(node)
 
-        for run in paragraph.runs:
-            run.font.color.rgb = RGBColor(r, g, b)
-            run.font.size = Pt(fontSize / 1.5)
-            run.font.name = "黑体"
-            run._element.rPr.rFonts.set(qn('w:eastAsia'), '黑体')
-            run.bold = is_blod
+            if len(item) > 1 and is_first is False:
+                run = paragraph.add_run(words)
+                run.font.color.rgb = RGBColor(r, g, b)
+                run.font.size = Pt(fontSize / 1.5)
+                run.font.name = "黑体"
+                run._element.rPr.rFonts.set(qn('w:eastAsia'), '黑体')
+                run.bold = is_blod
 
-        is_first = False
+            else:
+                paragraph = doc.add_paragraph(words)
+                for run in paragraph.runs:
+                    run.font.color.rgb = RGBColor(r, g, b)
+                    run.font.size = Pt(fontSize / 1.5)
+                    run.font.name = "黑体"
+                    run._element.rPr.rFonts.set(qn('w:eastAsia'), '黑体')
+                    run.bold = is_blod
+
+            is_first = False
+        elif node['type'] == 'TEXT_NODE_TYPE_RICH':
+            text = node['rich']['text']
+            if 'jump_url' in node['rich'].keys():
+                url = 'https://' + node['rich']['jump_url'].strip('http:').strip('https:').strip('//')
+                add_hyperlink(paragraph, text, url)
+            else:
+                run = paragraph.add_run(text)
+                run.font.color.rgb = RGBColor(47, 50, 56)
+                run.font.size = Pt(17 / 1.5)
+                run.font.name = "黑体"
+                run._element.rPr.rFonts.set(qn('w:eastAsia'), '黑体')
+
+    if align == 1:
+        paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
 
 
 def add_image(doc, image_path_list) -> None:
@@ -142,6 +211,7 @@ def add_image(doc, image_path_list) -> None:
         img.close()
         doc.add_picture(image_path, width=available_width)
 
+
 def add_link(doc, html) -> tuple:
     """
     Add link to document.
@@ -157,6 +227,30 @@ def get_module(INITIAL_STATE: dict, module_name: str):
         if module_name in ''.join(list(item.keys())):
             return item
     return None
+
+
+def add_auto_numbered_data(doc, items: list) -> None:
+    """
+    add auto numbered data.
+    :param doc: docx document.
+    :param items: items list
+    :return: None
+    """
+    for nodes in items:
+        order = nodes['order']
+        nodes['nodes'][0]['word']['words'] = str(order) + '. ' + nodes['nodes'][0]['word']['words']
+        add_text(doc, nodes['nodes'])
+
+
+def add_code_text(doc, item: dict) -> None:
+    content = item['code']['content']
+    lang = item['code']['lang']
+    paragraph = doc.add_paragraph(content)
+    for run in paragraph.runs:
+        run.font.name = 'Courier New'
+        run.font.size = Pt(14/2)
+        run.font.color.rgb = RGBColor(47, 50, 56)
+
 
 def get_article(cookie: str, article_id: str, doc_storage_location: str = '.', document_name: str = 'Document.doc',
                 img_path: str = 'img') -> None:
@@ -174,8 +268,6 @@ def get_article(cookie: str, article_id: str, doc_storage_location: str = '.', d
 
     with open('test.json', 'w', encoding='utf-8') as f:
         json.dump(INITIAL_STATE, f, ensure_ascii=False)
-
-    element = etree.HTML(html)
 
     title = get_module(INITIAL_STATE, 'title')
     author = get_module(INITIAL_STATE, 'author')
@@ -220,13 +312,13 @@ def get_article(cookie: str, article_id: str, doc_storage_location: str = '.', d
             run.font.color.rgb = RGBColor(148, 153, 160)
             run.font.size = Pt(13 / 1.5)
 
-    top_pic_url = list()
+    top_pic_urls = list()
     if module_top is not None:
-        module_top = module_top['module_top']['display']['album']['pics']
-        for pic in module_top:
-            top_pic_url.append(pic['url'])
+        module_tops = module_top['module_top']['display']['album']['pics']
+        for pic in module_tops:
+            top_pic_urls.append(pic['url'])
 
-    add_image(doc, get_img(cookie, top_pic_url, 'img'))
+    add_image(doc, get_img(cookie, top_pic_urls, 'img'))
 
     if module_content is not None:
         module_content = module_content['module_content']['paragraphs']
@@ -234,19 +326,28 @@ def get_article(cookie: str, article_id: str, doc_storage_location: str = '.', d
 
     for item in module_content:
         if item['para_type'] == 1:
-            add_text(doc, item['text'])
+            # add text
+            add_text(doc, item['text']['nodes'], item['align'])
         elif item['para_type'] == 2:
-            print('image')
+            # add pic
+            pic_urls = list()
+            pics = item['pic']['pics']
+            for pic in pics:
+                pic_urls.append(pic['url'])
+            add_image(doc, get_img(cookie, pic_urls, 'img'))
         elif item['para_type'] == 3:
             print('i don\'t know')
         elif item['para_type'] == 4:
             print('code_text')
         elif item['para_type'] == 5:
-            print('i don\'t know')
+            add_auto_numbered_data(doc, item['list']['items'])
         elif item['para_type'] == 6:
             print('link_card')
+        elif item['para_type'] == 7:
+            add_code_text(doc, item)
+            print('code_text')
         print(item)
-        print('-*-'*100)
+        print('*' * 100)
 
     print(title, author_name, author_time)
 
@@ -257,5 +358,5 @@ if __name__ == '__main__':
     with open('../cookie.json', 'r') as f:
         cookie = json.load(f)['cookie']
 
-    article_id = '318740526742916934'
-    get_article(cookie, article_id,'./', 'document.doc')
+    article_id = '700013939201671184'
+    get_article(cookie, article_id, './', 'document.doc')
