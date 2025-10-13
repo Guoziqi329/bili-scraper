@@ -85,7 +85,7 @@ def get_rgb(node: dict) -> tuple:
     :param node: node
     :return: r, g, b
     """
-    if 'color' in node['word'].keys():
+    if 'color' in node['word'].keys() and node['word']['color'] is not None:
         color = node['word']['color'].strip('#')
         return int(color[0:2], 16), int(color[2:4], 16), int(color[4:6], 16)
     else:
@@ -386,5 +386,5 @@ if __name__ == '__main__':
     with open('../cookie.json', 'r') as f:
         cookie = json.load(f)['cookie']
 
-    article_id = '700013939201671184'
+    article_id = '938072135117570071'
     get_article(cookie, article_id, './', 'document.doc')
