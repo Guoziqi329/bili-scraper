@@ -91,11 +91,22 @@ def get_rgb(node: dict) -> tuple:
     else:
         return 47, 50, 56
 
+
 def add_hyperlink(paragraph, text, url, color="00699D", underline=True):
+    """
+    add hyperlink
+    :param paragraph: paragraph
+    :param text: text to be added
+    :param url: link url
+    :param color: color for hyperlink,default 00699D
+    :param underline: text underline for hyperlink,default True
+    :return: underline element
+    """
     # get document part
     part = paragraph.part
     # create a relationship
-    r_id = part.relate_to(url, "http://schemas.openxmlformats.org/officeDocument/2006/relationships/hyperlink", is_external=True)
+    r_id = part.relate_to(url, "http://schemas.openxmlformats.org/officeDocument/2006/relationships/hyperlink",
+                          is_external=True)
 
     # create hyperlink element
     hyperlink = OxmlElement('w:hyperlink')
@@ -244,12 +255,28 @@ def add_auto_numbered_data(doc, items: list) -> None:
 
 def add_code_text(doc, item: dict) -> None:
     content = item['code']['content']
-    lang = item['code']['lang']
     paragraph = doc.add_paragraph(content)
     for run in paragraph.runs:
         run.font.name = 'Courier New'
-        run.font.size = Pt(14/2)
+        run.font.size = Pt(14 / 2)
         run.font.color.rgb = RGBColor(47, 50, 56)
+
+
+def add_link_card(doc, item: dict) -> None:
+    """
+    add link card.
+    :param doc: docx document.
+    :param item: items list
+    :return: None
+    """
+    paragraph = doc.add_paragraph('\n')
+    if 'opus' in item['link_card']['card']:
+        title_and_url = item['link_card']['card']['opus']
+    elif 'ugc' in item['link_card']['card']:
+        title_and_url = item['link_card']['card']['ugc']
+
+    add_hyperlink(paragraph, title_and_url['title'], title_and_url['jump_url'])
+    doc.add_paragraph('\n')
 
 
 def get_article(cookie: str, article_id: str, doc_storage_location: str = '.', document_name: str = 'Document.doc',
@@ -342,6 +369,7 @@ def get_article(cookie: str, article_id: str, doc_storage_location: str = '.', d
         elif item['para_type'] == 5:
             add_auto_numbered_data(doc, item['list']['items'])
         elif item['para_type'] == 6:
+            add_link_card(doc, item)
             print('link_card')
         elif item['para_type'] == 7:
             add_code_text(doc, item)
