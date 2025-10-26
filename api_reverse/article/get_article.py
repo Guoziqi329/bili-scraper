@@ -223,15 +223,6 @@ def add_image(doc, image_path_list) -> None:
         doc.add_picture(image_path, width=available_width)
 
 
-def add_link(doc, html) -> tuple:
-    """
-    Add link to document.
-    :param doc: docx document
-    :param html: html.
-    :return: link title,
-    """
-
-
 def get_module(INITIAL_STATE: dict, module_name: str):
     INITIAL_STATE = INITIAL_STATE['detail']['modules']
     for item in INITIAL_STATE:
@@ -280,14 +271,14 @@ def add_link_card(doc, item: dict) -> None:
 
 
 def get_article(cookie: str, article_id: str, doc_storage_location: str = '.', document_name: str = 'Document.doc',
-                img_path: str = 'img') -> None:
+                img_path: str = 'img') -> str:
     """
     get_article
     :param cookie: website's cookie information.
     :param article_id: article's url such as 1097430290934005800 (https://www.bilibili.com/opus/1097430290934005800?spm_id_from=333.1387.0.0)
     :param doc_storage_location: doc local storage in word.
     :param img_path: img path
-    :return: None
+    :return: document text
     """
     html = get_article_html(cookie, article_id)
     INITIAL_STATE = re.findall(r'window.__INITIAL_STATE__=(.*);\(function', html)[0]
@@ -380,6 +371,9 @@ def get_article(cookie: str, article_id: str, doc_storage_location: str = '.', d
     print(title, author_name, author_time)
 
     doc.save(f'{doc_storage_location}/{document_name}')
+
+    return "\n".join([s.text for s in doc.paragraphs])
+
 
 
 if __name__ == '__main__':
