@@ -7,6 +7,7 @@ import tempfile
 from moviepy.video.io.VideoFileClip import VideoFileClip
 from moviepy.audio.io.AudioFileClip import AudioFileClip
 import logging
+from pathlib import Path
 
 session = requests.Session()
 
@@ -48,19 +49,26 @@ def get_video_AND_audio_url(playinfo: dict, video_quality) -> tuple:
         'baseUrl']
 
 
-def get_video(cookie: str, video_id: str, path: str = '.', select_video_quality: bool = False) -> None:
+def get_video(cookie: str, video_id: str, output_dir: str = None, select_video_quality: bool = False) -> None:
     """
     get video
     :param cookie: website's cookie information
     :type cookie: str
     :param video_id: the id in the url, such as BV1Mg8RzFExV
     :type video_id: str
-    :param path: the folder where the video will be saved
-    :type path: str
+    :param output_dir: the folder where the video will be saved
+    :type output_dir: str
     :param select_video_quality: whether to choose video quality, default is not selected, video quality is the highest.
     :type select_video_quality: bool
     :return: None
     """
+    if output_dir is None:
+        output_dir = Path.cwd()
+    else:
+        output_dir = Path(output_dir)
+
+    output_dir.mkdir(parents=True, exist_ok=True)
+
     url = f'https://www.bilibili.com/video/{video_id}/'
 
     html = get_html(cookie, url)
@@ -107,7 +115,7 @@ def get_video(cookie: str, video_id: str, path: str = '.', select_video_quality:
 
         final_clip = video_clip.with_audio(audio_clip)
 
-        final_clip.write_videofile(path + '/' + 'output.mp4')
+        final_clip.write_videofile(output_dir / 'output.mp4')
         time.sleep(1)
 
     finally:
@@ -119,14 +127,9 @@ def get_video(cookie: str, video_id: str, path: str = '.', select_video_quality:
 
 
 if __name__ == '__main__':
-    logging.basicConfig(
-        level=logging.DEBUG,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-        datefmt="%Y-%m-%d %H:%M:%S"
-    )
     with open('../cookie.json', 'r') as f:
         cookie = json.load(f)['cookie']
 
     video_id = 'BV1FCbozHEfe'
 
-    get_video(cookie, video_id, select_video_quality=True)
+    get_video(cookie, video_id)

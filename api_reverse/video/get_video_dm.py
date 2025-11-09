@@ -1,13 +1,13 @@
 import requests
 import json
 import re
-from get_w_rid_And_wts import get_w_rid_And_wts, get_wbiImgKey_and_wbiSubKey
+from .get_w_rid_And_wts import get_w_rid_And_wts, get_wbiImgKey_and_wbiSubKey
 from google.protobuf.json_format import MessageToJson
 
 # dm_pb2 使用了 SocialSisterYi (https://github.com/SocialSisterYi) 的代码(https://github.com/SocialSisterYi/bilibili-API-collect/blob/master/grpc_api/bilibili/community/service/dm/v1/dm.proto)
 # 许可协议: CC-BY-NC 4.0 (https://creativecommons.org/licenses/by-nc/4.0/)
-import dm_pb2
-from get_video import get_playinfo, get_html
+from . import dm_pb2
+from .get_video import get_playinfo, get_html
 
 session = requests.Session()
 

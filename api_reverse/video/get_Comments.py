@@ -3,7 +3,8 @@ import requests
 import json
 import time
 import re
-from get_w_rid_And_wts import get_wbiImgKey_and_wbiSubKey, get_w_rid_And_wts, encodeURIComponent
+from pathlib import Path
+from .get_w_rid_And_wts import get_wbiImgKey_and_wbiSubKey, get_w_rid_And_wts, encodeURIComponent
 
 session = requests.Session()
 
@@ -90,11 +91,11 @@ def create_path(path: str) -> None:
         os.makedirs(path)
 
 
-def get_img(url: str, path: str, name: str) -> str:
+def get_img(url: str, img_dir: Path, name: str) -> Path:
     """
     get img from url
     :param url: img url
-    :param path: directory of images
+    :param img_dir: directory of images
     :param name: img name
     :return: img path
     """
@@ -103,24 +104,30 @@ def get_img(url: str, path: str, name: str) -> str:
     }
     response = session.get(url, headers=headers)
 
-    path = path.strip('/')
-    create_path(f'{path}/')
-    with open(f'{path}/{name}.{url.split('.')[-1]}', 'wb') as f:
+    img_dir.mkdir(parents=True, exist_ok=True)
+
+    with open(img_dir/f'{name}.{url.split('.')[-1]}', 'wb') as f:
         f.write(response.content)
-    return f'{path}/{name}.{url.split('.')[-1]}'
+    return img_dir/f'{name}.{url.split('.')[-1]}'
 
 
-def process_response(response, comments: list, oid: str, video_id: str, img_path: str = '.', delay: int = 3) -> list:
+def process_response(cookie, response, comments: list, oid: str, video_id: str, img_dir: str = None, delay: int = 3) -> list:
     """
     Response handling
+    :param cookie: website's cookie information
     :param response: response from bilibili
     :param comments: comments list
     :param oid: video id
     :param video_id: the id in the url, such as BV1Mg8RzFExV
-    :param img_path: directory of images
+    :param img_dir: directory of images
     :param delay: Interval time for initiating requests, the default value is 3.
     :return: comments list
     """
+    if img_dir is None:
+        img_dir = Path.cwd()
+    else:
+        img_dir = Path(img_dir)
+
     for item in response.json()['data']['replies']:
         if item['rcount'] > 0:
             second_level_comments = get_comments_on_the_comment(cookie, oid, item['rpid_str'],
@@ -136,8 +143,7 @@ def process_response(response, comments: list, oid: str, video_id: str, img_path
         if 'pictures' in item['content'].keys():
             for pic in item['content']['pictures']:
                 img_list.append({"img_src": pic["img_src"],
-                                 "img_path": get_img(pic['img_src'], f'{img_path}/{video_id}/{item['rpid_str']}',
-                                                     str(i))})
+                                 "img_path": str(get_img(pic['img_src'], img_dir / video_id / item["rpid_str"], str(i)))})
                 i += 1
                 time.sleep(delay)
         else:
@@ -160,7 +166,7 @@ def process_response(response, comments: list, oid: str, video_id: str, img_path
     return comments
 
 
-def get_video_comments(cookie: str, video_id: str, img_path: str = '.', delay: int = 3) -> list:
+def get_video_comments(cookie: str, video_id: str, img_path: str = None, delay: int = 3) -> list:
     """
     get video comments
     :param cookie: website's cookie information
@@ -172,7 +178,7 @@ def get_video_comments(cookie: str, video_id: str, img_path: str = '.', delay: i
 
     comments = list()
 
-    oid = get_oid(video_id, cookie)
+    oid = get_oid(cookie, video_id)
 
     payload = {
         "oid": oid,
@@ -196,7 +202,7 @@ def get_video_comments(cookie: str, video_id: str, img_path: str = '.', delay: i
 
     response = session.get("https://api.bilibili.com/x/v2/reply/wbi/main", headers=headers, params=payload)
 
-    comments = process_response(response, comments, oid, video_id, img_path, delay)
+    comments = process_response(cookie, response, comments, oid, video_id, img_path, delay)
 
     time.sleep(delay)
 
@@ -221,7 +227,7 @@ def get_video_comments(cookie: str, video_id: str, img_path: str = '.', delay: i
         if len(response.json()['data']['replies']) == 0:
             break
 
-        comments = process_response(response, comments, oid, video_id, img_path, delay)
+        comments = process_response(cookie, response, comments, oid, video_id, img_path, delay)
 
         time.sleep(delay)
 

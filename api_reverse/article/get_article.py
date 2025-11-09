@@ -1,4 +1,6 @@
 import time
+from pathlib import Path
+
 import requests
 import json
 import re
@@ -47,7 +49,7 @@ def get_p_tag_text(html) -> tuple:
         return '\n', color, is_strong
 
 
-def get_img(cookie, url_list: list, path) -> list:
+def get_img(cookie, url_list: list, path: Path) -> list:
     """
     get img.
     :param cookie: website's cookie information
@@ -65,16 +67,16 @@ def get_img(cookie, url_list: list, path) -> list:
         response = session.get(url, headers=headers)
         time.sleep(0.5)
 
-        create_path(path)
-
         name = url.split('/')[-1]
 
-        with open(f'{path}/{name}', 'wb') as f:
+        path.mkdir(parents=True, exist_ok=True)
+
+        with open(path/name, 'wb') as f:
             f.write(response.content)
 
-        print(f'{path}/{name}')
+        print(path/name)
 
-        result.append(f'{path}/{name}')
+        result.append(path/name)
 
     return result
 
@@ -220,7 +222,7 @@ def add_image(doc, image_path_list) -> None:
         img = Image.open(image_path)
         img.save(image_path)
         img.close()
-        doc.add_picture(image_path, width=available_width)
+        doc.add_picture(str(image_path), width=available_width)
 
 
 def get_module(INITIAL_STATE: dict, module_name: str):
@@ -270,16 +272,27 @@ def add_link_card(doc, item: dict) -> None:
     doc.add_paragraph('\n')
 
 
-def get_article(cookie: str, article_id: str, doc_storage_location: str = '.', document_name: str = 'Document.doc',
-                img_path: str = 'img') -> str:
+def get_article(cookie: str, article_id: str, doc_storage_location: str = None, document_name: str = 'Document.doc',
+                img_path: str = None) -> str:
     """
     get_article
     :param cookie: website's cookie information.
     :param article_id: article's url such as 1097430290934005800 (https://www.bilibili.com/opus/1097430290934005800?spm_id_from=333.1387.0.0)
     :param doc_storage_location: doc local storage in word.
+    :param document_name: document name.
     :param img_path: img path
     :return: document text
     """
+    if doc_storage_location is None:
+        doc_storage_location = Path.cwd()
+    else:
+        doc_storage_location = Path(doc_storage_location)
+
+    if img_path is None:
+        img_path = Path.cwd() / "img"
+    else:
+        img_path = Path(img_path)
+
     html = get_article_html(cookie, article_id)
     INITIAL_STATE = re.findall(r'window.__INITIAL_STATE__=(.*);\(function', html)[0]
     INITIAL_STATE = json.loads(INITIAL_STATE)
@@ -336,7 +349,7 @@ def get_article(cookie: str, article_id: str, doc_storage_location: str = '.', d
         for pic in module_tops:
             top_pic_urls.append(pic['url'])
 
-    add_image(doc, get_img(cookie, top_pic_urls, 'img'))
+    add_image(doc, get_img(cookie, top_pic_urls, img_path))
 
     if module_content is not None:
         module_content = module_content['module_content']['paragraphs']
@@ -352,7 +365,7 @@ def get_article(cookie: str, article_id: str, doc_storage_location: str = '.', d
             pics = item['pic']['pics']
             for pic in pics:
                 pic_urls.append(pic['url'])
-            add_image(doc, get_img(cookie, pic_urls, 'img'))
+            add_image(doc, get_img(cookie, pic_urls, img_path))
         elif item['para_type'] == 3:
             print('i don\'t know')
         elif item['para_type'] == 4:
@@ -370,7 +383,7 @@ def get_article(cookie: str, article_id: str, doc_storage_location: str = '.', d
 
     print(title, author_name, author_time)
 
-    doc.save(f'{doc_storage_location}/{document_name}')
+    doc.save(str(doc_storage_location / document_name))
 
     return "\n".join([s.text for s in doc.paragraphs])
 
