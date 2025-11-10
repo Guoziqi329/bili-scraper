@@ -13,6 +13,12 @@ class BilibiliCrawler:
     def __init__(self, cookie):
         self.cookie = cookie
 
+    def setCookie(self, cookie):
+        self.cookie = cookie
+
+    def getCookie(self):
+        return self.cookie
+
     def getArticle(self, article_id, doc_storage_location = None, document_name = 'Document.doc', img_path = None):
         return get_article(self.cookie, article_id, doc_storage_location, document_name, img_path)
 
