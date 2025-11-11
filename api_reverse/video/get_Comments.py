@@ -108,7 +108,7 @@ def get_img(url: str, img_dir: Path, name: str) -> Path:
 
     with open(img_dir/f'{name}.{url.split('.')[-1]}', 'wb') as f:
         f.write(response.content)
-    return img_dir/f'{name}.{url.split('.')[-1]}'
+    return Path.cwd()/img_dir/f'{name}.{url.split('.')[-1]}'
 
 
 def process_response(cookie, response, comments: list, oid: str, video_id: str, img_dir: str = None, delay: int = 3) -> list:
@@ -160,7 +160,6 @@ def process_response(cookie, response, comments: list, oid: str, video_id: str, 
                          'reply': second_level_comments, 'img': img_list, 'jump_url': jump_url_list})
 
         print(item['content']['message'])
-        print('*' * 50)
 
     print('-' * 200)
     return comments
