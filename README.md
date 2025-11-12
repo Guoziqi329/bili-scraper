@@ -20,7 +20,7 @@ This project is for learning purposes only, **please don’t use it for commerci
 
 ## start
 
-You can install it using the 'pip install bili-scraper' command
+You can install it using the ```pip install bili-scraper``` command
 
 ### Demo
 
