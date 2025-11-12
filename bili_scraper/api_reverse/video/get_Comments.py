@@ -234,7 +234,7 @@ def get_video_comments(cookie: str, video_id: str, img_path: str = None, delay: 
 
 
 if __name__ == '__main__':
-    with open('../cookie.json', 'r') as f:
+    with open('../../../cookie.json', 'r') as f:
         cookie = json.load(f)['cookie']
 
     video_id = 'BV1xqgazCECb'

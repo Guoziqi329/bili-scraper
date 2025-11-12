@@ -130,7 +130,7 @@ def get_video_dm(cookie: str, video_id: str) -> list:
 
 
 if __name__ == '__main__':
-    with open("../cookie.json", 'r') as f:
+    with open("../../../cookie.json", 'r') as f:
         cookie = json.load(f)["cookie"]
 
     video_id = 'BV1MU4y137Yi'

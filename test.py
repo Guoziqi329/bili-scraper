@@ -1,11 +1,11 @@
-from BilibiliCrawling import BilibiliCrawler
+from bili_scraper.bili_scraper import BiliScraper
 import json
 
 if __name__ == '__main__':
-    with open("api_reverse/cookie.json", "r", encoding="utf-8") as f:
+    with open("cookie.json", "r", encoding="utf-8") as f:
         cookie = json.load(f)['cookie']
 
-    bilibili = BilibiliCrawler(cookie)
+    bilibili = BiliScraper(cookie)
 
     bilibili.getVideo('BV1Jd1oB3EGD','video/video')
 

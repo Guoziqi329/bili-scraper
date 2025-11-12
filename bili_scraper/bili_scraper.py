@@ -1,8 +1,8 @@
-from api_reverse.article import get_article
-from api_reverse.video import get_video ,get_video_dm, get_video_comments
+from .api_reverse import get_article
+from .api_reverse.video import get_video ,get_video_dm, get_video_comments
 
 
-class BilibiliCrawler:
+class BiliScraper:
     _instance = None
 
     def __new__(cls, *args, **kwargs):

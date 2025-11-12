@@ -389,7 +389,7 @@ def get_article(cookie: str, article_id: str, doc_storage_location: str = None, 
 
 
 if __name__ == '__main__':
-    with open('../cookie.json', 'r') as f:
+    with open('../../../cookie.json', 'r') as f:
         cookie = json.load(f)['cookie']
 
     article_id = '938072135117570071'
