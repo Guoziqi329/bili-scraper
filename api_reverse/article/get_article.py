@@ -11,6 +11,7 @@ from docx.oxml.ns import qn
 from docx.oxml.shared import OxmlElement
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from PIL import Image
+import logging
 
 session = requests.Session()
 
@@ -48,10 +49,11 @@ def get_p_tag_text(html) -> tuple:
         return '\n', color, is_strong
 
 
-def get_img(cookie, url_list: list, path: Path) -> list:
+def get_img(cookie, article_id: str, url_list: list, path: Path) -> list:
     """
     get img.
     :param cookie: website's cookie information
+    :param article_id: article's ID
     :param url_list: each item under the opus-module-content class
     :param path: img path
     :return: image path list
@@ -68,14 +70,14 @@ def get_img(cookie, url_list: list, path: Path) -> list:
 
         name = url.split('/')[-1]
 
-        path.mkdir(parents=True, exist_ok=True)
+        Path(path/article_id).mkdir(parents=True, exist_ok=True)
 
-        with open(path/name, 'wb') as f:
+        with open(path/article_id/name, 'wb') as f:
             f.write(response.content)
 
-        print(path/name)
+        logging.log(logging.INFO,'get' + str(path/article_id/name))
 
-        result.append(path/name)
+        result.append(path/article_id/name)
 
     return result
 
@@ -285,7 +287,7 @@ def get_article(cookie: str, article_id: str, doc_storage_location: str = None, 
     if doc_storage_location is None:
         doc_storage_location = Path.cwd()
     else:
-        doc_storage_location = Path(doc_storage_location)
+        doc_storage_location = Path(Path.cwd() / doc_storage_location)
 
     if img_path is None:
         img_path = Path.cwd() / "img"
@@ -296,8 +298,8 @@ def get_article(cookie: str, article_id: str, doc_storage_location: str = None, 
     INITIAL_STATE = re.findall(r'window.__INITIAL_STATE__=(.*);\(function', html)[0]
     INITIAL_STATE = json.loads(INITIAL_STATE)
 
-    with open('test.json', 'w', encoding='utf-8') as f:
-        json.dump(INITIAL_STATE, f, ensure_ascii=False)
+    # with open('test.json', 'w', encoding='utf-8') as f:
+    #     json.dump(INITIAL_STATE, f, ensure_ascii=False)
 
     title = get_module(INITIAL_STATE, 'title')
     author = get_module(INITIAL_STATE, 'author')
@@ -348,41 +350,39 @@ def get_article(cookie: str, article_id: str, doc_storage_location: str = None, 
         for pic in module_tops:
             top_pic_urls.append(pic['url'])
 
-    add_image(doc, get_img(cookie, top_pic_urls, img_path))
+    add_image(doc, get_img(cookie, article_id, top_pic_urls, img_path))
 
     if module_content is not None:
         module_content = module_content['module_content']['paragraphs']
-        print(module_content)
 
     for item in module_content:
         if item['para_type'] == 1:
-            # add text
             add_text(doc, item['text']['nodes'], item['align'])
         elif item['para_type'] == 2:
-            # add pic
             pic_urls = list()
             pics = item['pic']['pics']
             for pic in pics:
                 pic_urls.append(pic['url'])
-            add_image(doc, get_img(cookie, pic_urls, img_path))
+            add_image(doc, get_img(cookie, article_id, pic_urls, img_path))
+            logging.log(logging.INFO, 'add picture urls: {}'.format(pic_urls))
         elif item['para_type'] == 3:
-            print('i don\'t know')
+            logging.log(logging.WARNING,'I don\'t know this para_type. If possible, please send this article to my GitHub ISSUES.(https://github.com/Guoziqi329/bilibili_crawling/issues)')
         elif item['para_type'] == 4:
-            print('code_text')
+            logging.log(logging.WARNING,'I don\'t know this para_type. If possible, please send this article to my GitHub ISSUES.(https://github.com/Guoziqi329/bilibili_crawling/issues)')
         elif item['para_type'] == 5:
             add_auto_numbered_data(doc, item['list']['items'])
+            logging.log(logging.INFO, 'add auto_numbered_data')
         elif item['para_type'] == 6:
             add_link_card(doc, item)
-            print('link_card')
+            logging.log(logging.INFO,'add link_card')
         elif item['para_type'] == 7:
             add_code_text(doc, item)
-            print('code_text')
-        print(item)
-        print('*' * 100)
+            logging.log(logging.INFO,'add code_text')
 
-    print(title, author_name, author_time)
-
+    doc_storage_location.mkdir(parents=True, exist_ok=True)
     doc.save(str(doc_storage_location / document_name))
+
+    logging.log(logging.INFO,f'{title}--{author_name}--{author_time} finished.')
 
     return "\n".join([s.text for s in doc.paragraphs])
 
