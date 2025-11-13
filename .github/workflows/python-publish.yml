@@ -26,6 +26,8 @@ jobs:
         with:
           python-version: "3.x"
 
+      - name: List files
+        run: ls -R
 
       - name: Build release distributions
         run: |
