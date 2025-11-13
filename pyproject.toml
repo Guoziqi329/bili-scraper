@@ -10,7 +10,7 @@ readme = {file = "README.md", content-type = "text/markdown"}
 authors = [
     {name = "guoziqi329", email = "guoziqi329@gmail.com"},
 ]
-license = {text = "MIT"}
+license = "MIT"
 license-files = ["LICENSE"]
 classifiers = [
     "Programming Language :: Python :: 3",
