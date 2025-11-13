@@ -127,7 +127,7 @@ def get_video(cookie: str, video_id: str, output_dir: str = None, select_video_q
 
 
 if __name__ == '__main__':
-    with open('../../../cookie.json', 'r') as f:
+    with open('../../../../test/cookie.json', 'r') as f:
         cookie = json.load(f)['cookie']
 
     video_id = 'BV1FCbozHEfe'

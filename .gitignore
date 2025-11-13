@@ -208,4 +208,4 @@ marimo/_lsp/
 __marimo__/
 
 # cookie
-cookie.json
+test/cookie.json

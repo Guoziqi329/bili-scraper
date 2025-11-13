@@ -161,7 +161,6 @@ def process_response(cookie, response, comments: list, oid: str, video_id: str, 
 
         print(item['content']['message'])
 
-    print('-' * 200)
     return comments
 
 
@@ -234,7 +233,7 @@ def get_video_comments(cookie: str, video_id: str, img_path: str = None, delay: 
 
 
 if __name__ == '__main__':
-    with open('../../../cookie.json', 'r') as f:
+    with open('../../../../test/cookie.json', 'r') as f:
         cookie = json.load(f)['cookie']
 
     video_id = 'BV1xqgazCECb'

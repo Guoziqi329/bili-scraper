@@ -1,4 +1,4 @@
-from bili_scraper.bili_scraper import BiliScraper
+from src.bili_scraper.bili_scraper import BiliScraper
 import json
 
 if __name__ == '__main__':
@@ -11,7 +11,7 @@ if __name__ == '__main__':
 
     comments = bilibili.getVideoComments('BV1Jd1oB3EGD', 'img', 1)
 
-    with open("test.json", "w", encoding="utf-8") as f:
+    with open("comments.json", "w", encoding="utf-8") as f:
         json.dump(comments, f, ensure_ascii=False)
 
     print(bilibili.getVideoDm("BV1vxPReEERx"))
