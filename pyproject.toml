@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "bili-scraper"
+version = "0.1.0"
+description = "Bilibili website crawler that can download videos, dm, comments, articles, and more."
+readme = {file = "README.md", content-type = "text/markdown"}
+authors = [
+    {name = "guoziqi329", email = "guoziqi329@gmail.com"},
+]
+license = {text = "MIT"}
+license-files = ["LICENSE"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+]
+requires-python = ">=3.8"
+dependencies = [
+    "requests>=2.0",
+    "python-docx>=1.2.0",
+    "Pillow>=11.3.0",
+    "moviepy>=2.1.2",
+    "protobuf>=6.32.0",
+    "click",
+]
+
+[project.urls]
+Homepage = "https://github.com/Guoziqi329/bili-scraper"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+exclude = ["tests*", "*.tests", "examples*", "docs*"]
+
+[tool.distutils.bdist_wheel]
+universal = false
