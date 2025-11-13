@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "bili-scraper"
-version = "0.1.0"
+version = "0.1.1"
 description = "Bilibili website crawler that can download videos, dm, comments, articles, and more."
 readme = {file = "README.md", content-type = "text/markdown"}
 authors = [
