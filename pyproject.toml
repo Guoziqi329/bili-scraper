@@ -14,7 +14,6 @@ license = "MIT"
 license-files = ["LICENSE"]
 classifiers = [
     "Programming Language :: Python :: 3",
-    "License :: OSI Approved :: MIT License",
 ]
 requires-python = ">=3.8"
 dependencies = [
@@ -30,7 +29,7 @@ dependencies = [
 Homepage = "https://github.com/Guoziqi329/bili-scraper"
 
 [tool.setuptools.packages.find]
-where = ["s rc"]
+where = ["src"]
 exclude = ["tests*", "*.tests", "examples*", "docs*"]
 
 [tool.distutils.bdist_wheel]
