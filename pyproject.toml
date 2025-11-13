@@ -30,7 +30,7 @@ dependencies = [
 Homepage = "https://github.com/Guoziqi329/bili-scraper"
 
 [tool.setuptools.packages.find]
-where = ["src"]
+where = ["s rc"]
 exclude = ["tests*", "*.tests", "examples*", "docs*"]
 
 [tool.distutils.bdist_wheel]
