@@ -74,8 +74,6 @@ def get_video_dm(cookie: str, video_id: str) -> list:
 
     dm_list = list()
 
-    print(len(my_seg.elems))
-
     i = 0
 
     ps = [0, 120000]
@@ -127,16 +125,3 @@ def get_video_dm(cookie: str, video_id: str) -> list:
         i = i + 1
 
     return dm_list
-
-
-if __name__ == '__main__':
-    with open("../../../../test/cookie.json", 'r') as f:
-        cookie = json.load(f)["cookie"]
-
-    video_id = 'BV1MU4y137Yi'
-    dm = get_video_dm(cookie, video_id)
-
-    dm = sorted(dm, key=lambda x: x['progress'])
-
-    with open('dm.json', 'w', encoding='utf-8') as f:
-        json.dump(dm, f, ensure_ascii=False)

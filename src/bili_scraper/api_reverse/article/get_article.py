@@ -385,12 +385,3 @@ def get_article(cookie: str, article_id: str, doc_storage_location: str = None, 
     logging.log(logging.INFO,f'{title}--{author_name}--{author_time} finished.')
 
     return "\n".join([s.text for s in doc.paragraphs])
-
-
-
-if __name__ == '__main__':
-    with open('../../../../test/cookie.json', 'r') as f:
-        cookie = json.load(f)['cookie']
-
-    article_id = '938072135117570071'
-    get_article(cookie, article_id, './', 'document.doc')

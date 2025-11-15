@@ -124,12 +124,3 @@ def get_video(cookie: str, video_id: str, output_dir: str = None, select_video_q
             os.remove(audio_path)
         except Exception:
             pass
-
-
-if __name__ == '__main__':
-    with open('../../../../test/cookie.json', 'r') as f:
-        cookie = json.load(f)['cookie']
-
-    video_id = 'BV1FCbozHEfe'
-
-    get_video(cookie, video_id)

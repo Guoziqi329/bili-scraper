@@ -1,7 +1,6 @@
 import requests
 import time
 import urllib.parse
-import json
 from hashlib import md5
 
 
@@ -61,21 +60,3 @@ def get_w_rid_And_wts(wbiImgKey: str, wbiSubKey: str, e: dict):
             l.append(encodeURIComponent(key) + "=" + encodeURIComponent(value))
     v = "&".join(l)
     return md5((v + a).encode()).hexdigest(), str(u)
-
-
-if __name__ == '__main__':
-    with open("../../../../test/cookie.json", 'r') as f:
-        cookie = json.load(f)["cookie"]
-
-    wbiImgKey, wbiSubKey = get_wbiImgKey_and_wbiSubKey(cookie)
-
-    e = {"cm_from_track_id": None,
-         "mode": "3",
-         "oid": "814225886",
-         "pagination_str": "{\"offset\":\"CAESEDE3OTU4OTI0MzE0NTIzNjIiAggB\"}",
-         "plat": "1",
-         "seek_rpid": None,
-         "type": "1",
-         "web_location": "1315875"}
-    w_rid, wts = get_w_rid_And_wts(wbiImgKey, wbiSubKey, e)
-    print(w_rid, wts)

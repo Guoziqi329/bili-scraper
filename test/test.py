@@ -7,13 +7,15 @@ if __name__ == '__main__':
 
     bilibili = BiliScraper(cookie)
 
-    bilibili.getVideo('BV1Jd1oB3EGD','video/video')
+    # bilibili.getVideo('BV1Jd1oB3EGD','video/video')
 
-    comments = bilibili.getVideoComments('BV1Jd1oB3EGD', 'img', 1)
+    comments = bilibili.getVideoComments('BV1om2FBVEhS', 'img', 1)
 
     with open("comments.json", "w", encoding="utf-8") as f:
         json.dump(comments, f, ensure_ascii=False)
 
-    print(bilibili.getVideoDm("BV1vxPReEERx"))
+    # dm = bilibili.getVideoDm("BV1YA4y1R7RJ")
+    # with open('dm.json', 'w', encoding='utf-8') as f:
+    #     json.dump(dm, f, ensure_ascii=False)
 
-    bilibili.getArticle("1102463389176692741", 'doc', 'doc.docx', 'img/test/')
+    # bilibili.getArticle("1102463389176692741", 'doc', 'doc.docx', 'img/test/')

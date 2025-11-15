@@ -1,6 +1,6 @@
 import os
 import requests
-import json
+import logging
 import time
 import re
 from pathlib import Path
@@ -32,6 +32,24 @@ def get_offset(response) -> str:
     :return: next offset (str)
     """
     return response.json()['data']['cursor']['pagination_reply']['next_offset']
+
+
+def get_jump_url_list(item: dict) -> list:
+    """
+    get jump url list
+    :param item: replies item
+    :return: list
+    """
+    jump_url_list = list()
+
+    if len(item['content']['jump_url'].keys()) > 0:
+        for key in item['content']['jump_url'].keys():
+            if 'pc_url' in item['content']['jump_url'][key]:
+                jump_url_list.append(item['content']['jump_url'][key]['pc_url'])
+            else:
+                jump_url_list.append(key if '/' in key else f'https://b23.tv/{key}')
+
+    return jump_url_list
 
 
 def get_comments_on_the_comment(cookie: str, oid: str, root: str, pages: int, delay: int = 3) -> list:
@@ -69,12 +87,7 @@ def get_comments_on_the_comment(cookie: str, oid: str, root: str, pages: int, de
             else:
                 at_information = None
 
-            jump_url_list = list()
-            if len(item['content']['jump_url'].keys()) > 0:
-                for jump_url in item['content']['jump_url'].keys():
-                    jump_url_list.append(jump_url if '/' in jump_url else f'https://b23.tv/{jump_url}')
-            else:
-                jump_url_list = None
+            jump_url_list = get_jump_url_list(item)
 
             comments.append({"rpid": item['rpid_str'],
                              "message": item['content']['message'],
@@ -82,7 +95,6 @@ def get_comments_on_the_comment(cookie: str, oid: str, root: str, pages: int, de
                              "jump_url": jump_url_list})
         time.sleep(delay)
 
-    print(comments)
     return comments
 
 
@@ -106,12 +118,36 @@ def get_img(url: str, img_dir: Path, name: str) -> Path:
 
     img_dir.mkdir(parents=True, exist_ok=True)
 
-    with open(img_dir/f'{name}.{url.split('.')[-1]}', 'wb') as f:
+    with open(img_dir / f'{name}.{url.split('.')[-1]}', 'wb') as f:
         f.write(response.content)
-    return Path.cwd()/img_dir/f'{name}.{url.split('.')[-1]}'
+    return Path.cwd() / img_dir / f'{name}.{url.split('.')[-1]}'
 
 
-def process_response(cookie, response, comments: list, oid: str, video_id: str, img_dir: str = None, delay: int = 3) -> list:
+def get_img_list(item: dict, delay: int, img_dir: Path, video_id: str) -> list:
+    """
+    get img list
+    :param item: replies item
+    :param delay: Interval time for initiating requests
+    :param img_dir: directory of images
+    :param video_id: the id in the url, such as BV1Mg8RzFExV
+    :return: list
+    """
+    img_list = list()
+
+    i = 1
+    if 'pictures' in item['content'].keys():
+        for pic in item['content']['pictures']:
+            img_list.append({"img_src": pic["img_src"],
+                             "img_path": str(
+                                 get_img(pic['img_src'], img_dir / video_id / item["rpid_str"], str(i)))})
+            i += 1
+            time.sleep(delay)
+
+    return img_list
+
+
+def process_response(cookie, response, comments: list, oid: str, video_id: str, img_dir: str = None,
+                     delay: int = 3) -> list:
     """
     Response handling
     :param cookie: website's cookie information
@@ -128,6 +164,22 @@ def process_response(cookie, response, comments: list, oid: str, video_id: str, 
     else:
         img_dir = Path(img_dir)
 
+    # get top replies
+    if (top_replies := response.json()['data']['top_replies']) is not None and len(top_replies) > 0:
+        second_level_comments = get_comments_on_the_comment(cookie, oid, top_replies[0]['rpid_str'],
+                                                            int(top_replies[0]['rcount'] / 10) + 1
+                                                            if top_replies[0]['rcount'] % 10 != 0
+                                                            else int(top_replies[0]['rcount'] / 10), delay)
+
+        img_list = get_img_list(top_replies[0], delay, img_dir, video_id)
+
+        jump_url_list = get_jump_url_list(top_replies[0])
+
+        comments.append({'rpid': top_replies[0]['rpid_str'], 'message': top_replies[0]['content']['message'],
+                         'reply': second_level_comments, 'img': img_list, 'jump_url': jump_url_list})
+
+        logging.log(logging.INFO, f'get top replies {top_replies[0]['rpid_str']}')
+
     for item in response.json()['data']['replies']:
         if item['rcount'] > 0:
             second_level_comments = get_comments_on_the_comment(cookie, oid, item['rpid_str'],
@@ -137,29 +189,14 @@ def process_response(cookie, response, comments: list, oid: str, video_id: str, 
         else:
             second_level_comments = None
 
-        img_list = list()
+        img_list = get_img_list(item, delay, img_dir, video_id)
 
-        i = 1
-        if 'pictures' in item['content'].keys():
-            for pic in item['content']['pictures']:
-                img_list.append({"img_src": pic["img_src"],
-                                 "img_path": str(get_img(pic['img_src'], img_dir / video_id / item["rpid_str"], str(i)))})
-                i += 1
-                time.sleep(delay)
-        else:
-            img_list = None
-
-        jump_url_list = list()
-        if len(item['content']['jump_url'].keys()) > 0:
-            for jump_url in item['content']['jump_url'].keys():
-                jump_url_list.append(jump_url if '/' in jump_url else f'https://b23.tv/{jump_url}')
-        else:
-            jump_url_list = None
+        jump_url_list = get_jump_url_list(item)
 
         comments.append({'rpid': item['rpid_str'], 'message': item['content']['message'],
                          'reply': second_level_comments, 'img': img_list, 'jump_url': jump_url_list})
 
-        print(item['content']['message'])
+        logging.log(logging.INFO, f'get replies {item['rpid_str']}')
 
     return comments
 
@@ -230,14 +267,3 @@ def get_video_comments(cookie: str, video_id: str, img_path: str = None, delay: 
         time.sleep(delay)
 
     return comments
-
-
-if __name__ == '__main__':
-    with open('../../../../test/cookie.json', 'r') as f:
-        cookie = json.load(f)['cookie']
-
-    video_id = 'BV1xqgazCECb'
-    comments = get_video_comments(cookie, video_id, '../img')
-
-    with open(f"result.json", "w", encoding='utf-8') as f:
-        json.dump(comments, f, ensure_ascii=False)
