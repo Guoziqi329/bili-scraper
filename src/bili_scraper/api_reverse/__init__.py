@@ -1,5 +1,6 @@
 from .article import get_article
-from .video import get_video, get_video_dm, get_video_comments
+from .video import GetVideo, GetDM, GetComments
+from .login import Login
 import logging
 
 logging.basicConfig(
@@ -8,4 +9,4 @@ logging.basicConfig(
     datefmt="%Y-%m-%d %H:%M:%S"
 )
 
-__all__ = ['get_article', 'get_video', 'get_video_dm', 'get_video_comments']
+__all__ = ['get_article', 'GetVideo', 'GetDM', 'GetComments', 'Login']
