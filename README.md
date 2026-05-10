@@ -29,24 +29,27 @@ from bili_scraper import BiliScraper
 import json
 
 if __name__ == '__main__':
-    with open("cookie.json", "r", encoding="utf-8") as f:
-        cookie = json.load(f)['cookie']
+    bilibili = BiliScraper()
+    # with open('cookie.json', 'r') as f:
+    #     cookie = json.load(f)
+    # bilibili.set_cookies(cookie)
+    bilibili.Login()
 
-    bilibili = BiliScraper(cookie)
+    with open('cookie.json', 'w') as f:
+        json.dump(dict(bilibili.getCookie()), f)
 
-    # Get video
-    bilibili.getVideo('BV1Jd1oB3EGD')
+    bilibili.getVideo('BV15bdmBNEZr', output_dir='./video', quick_splicing=True)
 
-    # Get video comments
-    comments = bilibili.getVideoComments('BV1Jd1oB3EGD', 'img', 1)
-    with open("test.json", "w", encoding="utf-8") as f:
+    comments = bilibili.getVideoComments('BV15bdmBNEZr', './img', 1)
+
+    with open("comments.json", "w", encoding="utf-8") as f:
         json.dump(comments, f, ensure_ascii=False)
-    
-    # Get video Dm
-    print(bilibili.getVideoDm("BV1vxPReEERx"))
 
-    # Get Article
-    bilibili.getArticle("1102463389176692741", 'doc', 'doc.docx', 'img/test/')
+    dm = bilibili.getVideoDm("BV15bdmBNEZr")
+    with open('dm.json', 'w', encoding='utf-8') as f:
+        json.dump(dm, f, ensure_ascii=False)
+
+    bilibili.getArticle("1199888451663560745", 'doc', 'doc.docx', './article/img/')
 ```
 
 
