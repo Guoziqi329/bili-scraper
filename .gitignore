@@ -209,3 +209,10 @@ __marimo__/
 
 # cookie
 test/cookie.json
+/test/comments.json
+/test/dm.json
+/test/article/
+/test/cache/
+/test/doc/
+/test/img/
+/test/video/
