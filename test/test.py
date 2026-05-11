@@ -3,9 +3,9 @@ import json
 
 if __name__ == '__main__':
     bilibili = BiliScraper()
-    with open('cookie.json', 'r') as f:
-        cookie = json.load(f)
-    bilibili.set_cookies(cookie)
+    # with open('cookie.json', 'r') as f:
+    #     cookie = json.load(f)
+    # bilibili.set_cookies(cookie)
     bilibili.Login()
 
     with open('cookie.json', 'w') as f:
