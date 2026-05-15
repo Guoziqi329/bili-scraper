@@ -66,9 +66,9 @@ class Login:
         login_url, qrcode_key = response.json()['data']['url'], response.json()['data']['qrcode_key']
         return login_url, qrcode_key
 
-    def checkLogin(self, qrcode_key):
+    def checkQRCode(self, qrcode_key):
         """
-        check login
+        Check QR code validity
         :param qrcode_key: qrcode key
         :return: code
         """
@@ -86,7 +86,7 @@ class Login:
 
         code = 1
         while code:
-            code = self.checkLogin(qrcode_key)
+            code = self.checkQRCode(qrcode_key)
             time.sleep(1)
 
         print(self.session.cookies)

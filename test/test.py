@@ -8,6 +8,8 @@ if __name__ == '__main__':
     # bilibili.set_cookies(cookie)
     bilibili.Login()
 
+    print(bilibili.get_user_info())
+
     with open('cookie.json', 'w') as f:
         json.dump(dict(bilibili.getCookie()), f)
 

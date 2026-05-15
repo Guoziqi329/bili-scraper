@@ -204,7 +204,7 @@ class GetComments:
         :param video_id: the id in the url, such as BV1Mg8RzFExV
         :param img_path: directory of images
         :param delay: Interval time for initiating requests, the default value is 3.
-        :return: comment information
+        :return: comments list
         """
 
         comments = list()
